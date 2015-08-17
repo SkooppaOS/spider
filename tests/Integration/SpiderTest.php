@@ -47,13 +47,6 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
         ];
     }
 
-    public function getSpiderConfigForTesting($spider)
-    {
-        $actual = $spider->getConfig();
-        unset($actual['connections']['cache']);
-        return $actual;
-    }
-
     public function testConfigure()
     {
         $this->specify("it globally sets up via static `setup`", function () {
@@ -72,7 +65,7 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
 
         $this->specify("it configures an instance via constructor", function () {
             $spider = new Spider($this->fullConfig);
-            $actual = $this->getSpiderConfigForTesting($spider);
+            $actual = $spider->getConfig();
 
             $this->assertEquals($this->fullConfig, $actual, "failed to setup global configuration");
         });
@@ -80,23 +73,26 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
         $this->specify("it configures an instance via `configure`", function () {
             $spider = new Spider();
             $spider->configure($this->fullConfig);
-            $actual = $this->getSpiderConfigForTesting($spider);
+            $actual = $spider->getConfig();
 
             $this->assertEquals($this->fullConfig, $actual, "failed to setup global configuration");
         });
 
         $this->specify("it merges with default configuration", function () {
-            $spider = new Spider([
+            $config = [
                 'logging' => 3,
                 'errors' => [
                     'all' => 'fail'
                 ]
-            ]);
+            ];
+            $config['connections'] = $this->fullConfig['connections'];
+
+            $spider = new Spider($config);
             $actual = $spider->getConfig();
 
             $expected = Spider::getDefaults();
             $expected['logging'] = 3;
-            $expected['connections'] = [];
+            $expected['connections'] = $config['connections'];
             $expected['errors']['all'] = 'fail';
 
             $this->assertEquals($expected, $actual, "failed to set defaults");
@@ -110,7 +106,7 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             $spider = Spider::make();
 
             $this->assertInstanceOf('Spider\Spider', $spider, "failed to return a Spider");
-            $this->assertEquals($this->fullConfig, $this->getSpiderConfigForTesting($spider), "failed to setup configuration");
+            $this->assertEquals($this->fullConfig, $spider->getConfig(), "failed to setup configuration");
 
             // With the default connection
             $this->assertInstanceOf(
@@ -131,7 +127,7 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             $spider = Spider::make('orient');
 
             $this->assertInstanceOf('Spider\Spider', $spider, "failed to return a Spider");
-            $this->assertEquals($this->fullConfig, $this->getSpiderConfigForTesting($spider), "failed to setup configuration");
+            $this->assertEquals($this->fullConfig, $spider->getConfig(), "failed to setup configuration");
 
             // With the default connection
             $this->assertInstanceOf(
@@ -149,7 +145,7 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
 
         $this->specify("it instantiates a new instance", function () {
             $spider = new Spider($this->fullConfig);
-            $actual = $this->getSpiderConfigForTesting($spider);
+            $actual = $spider->getConfig();
 
             $this->assertEquals($this->fullConfig, $actual, "failed to setup global configuration");
         });
@@ -229,5 +225,33 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             $this->assertInstanceOf('Spider\Commands\Query', $query, "failed to return a query builder");
             $this->assertEquals('Spider\Drivers\Neo4J\Driver', $query->getConnection()->getDriverName(), "failed to return with correct connection");
         });
+    }
+
+    public function testConnectionExceptions()
+    {
+        $this->specify("it throws an exception without a default connection", function () {
+            Spider::setup([
+                'connections' => [
+                    'orient' => []
+                ]
+            ]);
+            $spider = Spider::make();
+        }, ['throws' => 'Spider\Exceptions\ConnectionNotFoundException']);
+
+        $this->specify("it throws an exception without connection credentials", function () {
+            $spider = Spider::make();
+        }, ['throws' => 'Spider\Exceptions\ConnectionNotFoundException']);
+
+        $this->specify("it throws an exception without a valid connection", function () {
+            Spider::setup([
+                'connections' => [
+                    'default' => 'notexistant',
+                    'does_exist' => [
+                        'driver' => 'orientdb'
+                    ]
+                ]
+            ]);
+            $spider = Spider::make();
+        }, ['throws' => 'Spider\Exceptions\ConnectionNotFoundException']);
     }
 }

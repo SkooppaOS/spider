@@ -5,6 +5,7 @@ use Michaels\Manager\IocManager;
 use Michaels\Manager\Manager as BaseManager;
 use Spider\Commands\Query;
 use Spider\Connections\Manager as ConnectionManager;
+use Spider\Exceptions\ConnectionNotFoundException;
 
 class Spider extends Query
 {
@@ -98,16 +99,20 @@ class Spider extends Query
         $this->config = new BaseManager();
 
         // Configure Instance
-        $this->configure($config, $connection);
+        if (!empty($config)) {
+            $this->configure($config, $connection);
+        }
     }
 
     /**
      * Configures current instance
      * @param array $config
      * @param null $connection
+     * @throws ConnectionNotFoundException
      */
     public function configure(array $config, $connection = null)
     {
+        // Set options with defaults
         if (empty($config)) {
             $config = $this->getDefaults();
         } else {
@@ -139,6 +144,8 @@ class Spider extends Query
             );
 
             unset($config['connections']);
+        } else {
+            throw new ConnectionNotFoundException("Spider cannot be instantiated without a connection");
         }
 
         /* Components for the IoC Manager */
@@ -184,6 +191,7 @@ class Spider extends Query
         $config['components'] = $this->di->getIocManifest();
 
         $config['connections'] = $this->connections->all();
+        unset($config['connections']['cache']);
 
         return $config;
     }
