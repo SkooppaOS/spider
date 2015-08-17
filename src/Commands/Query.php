@@ -229,4 +229,24 @@ class Query extends Builder
         parent::clear($properties);
         $this->script = null;
     }
+
+    /**
+     * Gets current connection
+     * @return ConnectionInterface
+     */
+    public function getConnection()
+    {
+        return $this->connection;
+    }
+
+    /**
+     * Sets current Connection
+     * @param ConnectionInterface $connection
+     * @return $this
+     */
+    public function setConnection($connection)
+    {
+        $this->connection = $connection;
+        return $this;
+    }
 }

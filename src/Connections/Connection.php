@@ -248,7 +248,7 @@ class Connection extends Collection implements ConnectionInterface
             $driverClass = $this->driverAliases[$driver];
             $this->driver = new $driverClass();
 
-            // As a classname
+        // As a classname
         } else {
             $this->driver = new $driver();
         }

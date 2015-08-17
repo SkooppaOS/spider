@@ -25,11 +25,7 @@ class Manager extends Collection implements ManagesItemsInterface
      */
     public function __construct($connections = [])
     {
-        $properties = [
-            'connections' => $connections,
-        ];
-
-        $this->initManager($properties);
+        $this->initManager($connections);
     }
 
     /**
@@ -54,7 +50,7 @@ class Manager extends Collection implements ManagesItemsInterface
         $alias = (string)$alias ?: $this->getDefault();
 
         // Verify the connection properties are set
-        if (!$this->has("connections.$alias")) {
+        if (!$this->has($alias)) {
             throw new ConnectionNotFoundException("$alias has not been registered");
         }
 
@@ -110,7 +106,7 @@ class Manager extends Collection implements ManagesItemsInterface
     {
         // Get properties from stored, if needed
         if (is_string($properties)) {
-            $properties = $this->get("connections.$properties");
+            $properties = $this->get($properties);
         }
 
         // Extract the driver
@@ -132,7 +128,7 @@ class Manager extends Collection implements ManagesItemsInterface
     {
         // Set the default connection
         try {
-            $alias = $this->get('connections.default');
+            $alias = $this->get('default');
         } catch (ItemNotFoundException $e) {
             throw new ConnectionNotFoundException("There is no default connection set");
         }

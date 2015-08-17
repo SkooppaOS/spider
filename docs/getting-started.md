@@ -38,71 +38,56 @@ $ composer require spider/spider
 The `master` branch contains stable code, though not necessarily ready for production.
 The `develop` branch is a step ahead and may me unstable right now.
 
-## Connections
-A connection holds the driver to a datastore and whatever settings that driver needs to connect (username, host, port, etc). 
+## Crawl Your Data
+Spider is a collection of many different pieces including connections, drivers, querybuilders, and the like.
+To get up an running fast, configure all of them from one place and use a `Spider` to do everything you need to do.
 
-Creating a new connection is as easy as filling it with configuration properties:
 ```php
-$connection = new Connection([
-    'driver' = 'orientdb',
-    'hostname' = 'hostname'
-    // and the rest of your credentials
-]);
+Spider\Spider::setup([
+     'connections' => [
+         'default' => 'orient',
+         'orient' => [
+             'driver' => 'orientdb',
+             'hostname' => 'localhost',
+             'port' => 2424,
+             'username' => 'root',
+             'password' => "root",
+             'database' => 'modern_graph'
+         ]
+     ]
+ ];
 ```
 
 Three drivers ship with Spider: `orientdb`, `neo4j`, and `gremlin` (gremlin server).
-You may also specify any class that implements `Spider\Drivers\DriverInterface` if you are [creating your own driver](create-driver.md)
+You may also specify any class that implements `Spider\Drivers\DriverInterface` if you are [creating your own driver](create-driver.md). 
+Each driver has its own connection properties.
 
-Connections also inherit from [michaels/data-manager](http://github.com/chrismichaels84/data-manager), so you have access to get(), set, has(), etc using dot notation for all properties.
+You may also have multiple connections, but you must choose one to be the default.
+
+Now that you have Spider setup, simply: 
 ```php
-$connection->set('port', 2424);
+$spider = Spider\Spider::make();
 ```
 
-Once you have a connection, you can dive straight into the database.
+To get a new spider with the default connection up and running. If you want a spider with a different connection:
 ```php
-$connection->open();
-$query = new Command("SELECT FROM V where name = 'Jayne Cobb'");
-$response = $connection->executeReadCommand($query); // only accepts Commands
-$response = $response->getSet(); // turns a raw response into a Collection
-$connection->close();
-
-echo $response->name; // Jayne Cobb
-echo $response->favorite; // Bertha
+$spider = Spider\Spider::make('another_connection');
 ```
-This, though requires you to write out every query and manage the connection and response formats yourself.
-We recommend you use the [Query Builder](command-builder.md) for that.
 
-### Managing Connections
-For convenience, a connection manager is included.
-You can store multiple connections, each with their own driver and configuration.
-
-The credentials include *at least* a `default` driver name, and the configuration for that driver.
-
+With that Spider, you can jump into the QueryBuilder:
 ```php
-$manager = new Spider\Connections\Manager([
-    'default' => 'default-connection',
-    'default-connection' => [
-        'driver'   => 'neo4j',
-        'whatever' => 'options',
-        'the' => 'driver',
-        'needs' => 'to connect'
-    ],
-    'connection-two' => [
-        'driver' => 'Some\Other\Full\Namespace\Class',
-        'whatever' => 'credentials',
-        'are' => 'needed'
-    ]
-]);
-
-$defaultConnection = $manager->make();
-$connectionTwo = $manager->make('connection-two');
+$user = $spider->select()->from('users')->where('username', 'jason')->first();
+echo $user->username; // 'jason'
 ```
-The connection manager also inherits from [michaels/data-manager](http://github.com/chrismichaels84/data-manager).
+See [the query builder](command-builder.md) for details.
 
-### Fetching and Caching Connections
-Anytime you `make()` a connection it will be cached so you can draw the same connection again.
-You can get that cached connection via `fetch()` which will also create a new connection if it has not already been `make()`d
+You can also use that Spider to get other query builders and connections from your configuration:
 ```php
-$manager->fetch(); // Will return cached default connection, or create then cache it before returning
-$manager->fetch('connection-name'); // same
+$neoConnection = $spider->connection('neo4j'); // if you have a neo4j connection set it your config
+$neoQueryBuilder = $spider->querybuilder('neo4j'); // if you have a neo4j connection set it your config
 ```
+
+See [configuration](configuration.md) for other configuration options.
+
+Spider is made up of lots of different parts (connections, querybuilders, managers). 
+You may use each piece individually (look through the docs for more info).
