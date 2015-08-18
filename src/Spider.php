@@ -7,6 +7,7 @@ use Michaels\Manager\Manager as BaseManager;
 use Spider\Commands\Query;
 use Spider\Connections\Manager as ConnectionManager;
 use Spider\Exceptions\ConnectionNotFoundException;
+use Symfony\Component\Config\Definition\Exception\Exception;
 
 class Spider extends Query
 {
@@ -41,8 +42,8 @@ class Spider extends Query
     /** @var array Defaults for global setup configuration, minus connections */
     protected static $defaults = [
         'integrations' => [
-//            'events' => 'Spider\Integrations\Events\Emitter',
-//            'logger' => 'Spider\Integrations\Logs\Logger',
+            'events' => 'Spider\Integrations\Events\Emitter',
+            'logger' => 'Spider\Integrations\Logs\Logger',
         ],
         'errors' => [
             'not_supported' => 'silent'
@@ -144,21 +145,15 @@ class Spider extends Query
             $config = $this->getDefaults();
         } else {
             /* Set Defaults Where Needed */
-            /* ToDo: Merging with defaults should be refactored */
             foreach ($this->getDefaults() as $key => $value) {
-                if (is_array($value)) {
-                    foreach ($value as $k => $v) {
-                        if (!isset($config[$key][$k])) {
-                            $config[$key][$k] = $v;
-                        }
-                    }
-                }
                 if (!isset($config[$key])) {
                     $config[$key] = $value;
+                } elseif (is_array($value)) {
+                    $config[$key] = array_merge($this->getDefaults()[$key], $config[$key]);
                 }
+                // If value is set and not an array, leave it alone
             }
         }
-
 
         /* Connection Manager and Connection */
         if (isset($config['connections'])) {
@@ -177,7 +172,6 @@ class Spider extends Query
 
         /* Components for the IoC Manager */
         if (isset($config['integrations'])) {
-
             $this->di->initDI($config['integrations']);
             unset($config['integrations']);
         }

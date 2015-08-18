@@ -38,16 +38,13 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
         ];
 
         $this->integrations = [
-            'integrations' => [
-                'events' => 'Events',
-                'logger' => 'logging',
-            ],
+            'events' => 'EventDispatcher',
+            'logger' => 'logging',
         ];
 
         $this->options = [
             'errors' => [
                 'not_supported' => 'warning',
-                'all' => 'warning'
             ],
             'logging' => false,
         ];
@@ -93,7 +90,7 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             $config = [
                 'logging' => 3,
                 'errors' => [
-                    'all' => 'fail'
+                    'not_supported' => 'fail'
                 ]
             ];
             $config['connections'] = $this->fullConfig['connections'];
@@ -104,7 +101,7 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             $expected = Spider::getDefaults();
             $expected['logging'] = 3;
             $expected['connections'] = $config['connections'];
-            $expected['errors']['all'] = 'fail';
+            $expected['errors']['not_supported'] = 'fail';
 
             $this->assertEquals($expected, $actual, "failed to set defaults");
         });
@@ -117,41 +114,21 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             $spider = Spider::make();
 
             $this->assertInstanceOf('Spider\Spider', $spider, "failed to return a Spider");
+            $this->assertInstanceOf('Spider\Commands\Query', $spider, "failed to return a Query Builder");
+            $this->assertInstanceOf('Spider\Connections\ConnectionInterface', $spider->getConnection(), "invalid connection");
+            $this->assertInstanceOf('Spider\Drivers\OrientDB\Driver', $spider->getDriver(), "failed to set driver");
             $this->assertEquals($this->fullConfig, $spider->getConfig(), "failed to setup configuration");
-
-            // With the default connection
-            $this->assertInstanceOf(
-                'Spider\Connections\ConnectionInterface',
-                $connection = $spider->getConnection(),
-                "failed to set a valid connection"
-            );
-
-            $this->assertInstanceOf(
-                'Spider\Drivers\OrientDB\Driver',
-                $connection->getDriver(),
-                'failed to set the correct connection'
-            );
         });
 
         $this->specify("it creates from static factory: specific connection", function () {
             Spider::setup($this->fullConfig);
-            $spider = Spider::make('orient');
+            $spider = Spider::make('neo');
 
             $this->assertInstanceOf('Spider\Spider', $spider, "failed to return a Spider");
+            $this->assertInstanceOf('Spider\Commands\Query', $spider, "failed to return a Query Builder");
+            $this->assertInstanceOf('Spider\Connections\ConnectionInterface', $spider->getConnection(), "invalid connection");
+            $this->assertInstanceOf('Spider\Drivers\Neo4J\Driver', $spider->getDriver(), "failed to set driver");
             $this->assertEquals($this->fullConfig, $spider->getConfig(), "failed to setup configuration");
-
-            // With the default connection
-            $this->assertInstanceOf(
-                'Spider\Connections\ConnectionInterface',
-                $connection = $spider->getConnection(),
-                "failed to set a valid connection"
-            );
-
-            $this->assertInstanceOf(
-                'Spider\Drivers\OrientDB\Driver',
-                $connection->getDriver(),
-                'failed to set the correct connection'
-            );
         });
 
         $this->specify("it instantiates a new instance", function () {
@@ -159,19 +136,6 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             $actual = $spider->getConfig();
 
             $this->assertEquals($this->fullConfig, $actual, "failed to setup global configuration");
-        });
-    }
-
-    public function testConnectionSetup()
-    {
-        $this->specify("it sets up orient db connection correctly", function () {
-            Spider::setup($this->fullConfig);
-            $spider = Spider::make('orient');
-
-            $this->assertInstanceOf('Spider\Spider', $spider, "failed to return a Spider");
-            $this->assertInstanceOf('Spider\Commands\Query', $spider, "failed to return a Query Builder");
-            $this->assertInstanceOf('Spider\Connections\ConnectionInterface', $spider->getConnection(), "invalid connection");
-            $this->assertInstanceOf('Spider\Drivers\OrientDB\Driver', $spider->getDriver(), "failed to set driver");
         });
     }
 
@@ -184,7 +148,7 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
         $fixture->load();
 
         Spider::setup($this->fullConfig);
-        $spider = Spider::make('orient');
+        $spider = Spider::make(); // orientdb by default
 
         $response = $spider->select()->all();
 
@@ -286,7 +250,7 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
 
     /* This is also tested in the michaels/data-manager package */
     /* The standard IoC container has a lot more functionality. See michaels/data-manager */
-    /* Tested here to ensure comparability */
+    /* Tested here to ensure compatibility */
     public function testIocContainer()
     {
         $this->specify("it uses a string-based factory", function () {
