@@ -171,10 +171,12 @@ class Spider extends Query
         }
 
         /* Components for the IoC Manager */
-        if (isset($config['integrations'])) {
-            $this->di->initDI($config['integrations']);
-            unset($config['integrations']);
-        }
+        $this->di->initDI($config['integrations']);
+        unset($config['integrations']);
+
+        /* Event Dispatcher */
+        // Now, when you fetch() events, it will return the one dispatcher
+        $this->di->share('events');
 
         /* General Configuration */
         $this->config->reset($config);
