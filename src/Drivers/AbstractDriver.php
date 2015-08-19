@@ -1,6 +1,7 @@
 <?php
 namespace Spider\Drivers;
 
+use Michaels\Manager\Manager;
 use Spider\Base\Collection;
 
 abstract class AbstractDriver extends Collection implements DriverInterface
@@ -23,6 +24,15 @@ abstract class AbstractDriver extends Collection implements DriverInterface
      * @var bool whether or not the driver is currently handling an open transaction
      */
     public $inTransaction = false;
+
+    /** @var  Manager General configuration */
+    protected $config;
+
+    public function __construct(array $properties = [], Manager $config = null)
+    {
+        $this->config = $config;
+        parent::__construct($properties);
+    }
 
     public function __destruct()
     {

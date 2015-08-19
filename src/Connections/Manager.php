@@ -18,14 +18,24 @@ class Manager extends Collection implements ManagesItemsInterface
      *      remove(), clear(), toJson, isEmpty(), __toString()
      */
 
+    /** @var \Michaels\Manager\Manager Configuration */
+    protected $config;
+
     /**
      * Build a new manager instance
      *
      * @param array $connections
+     * @param \Michaels\Manager\Manager $config
      */
-    public function __construct($connections = [])
+    public function __construct($connections = [], \Michaels\Manager\Manager $config = null)
     {
         $this->initManager($connections);
+        $this->config = $config;
+    }
+
+    public function setConfig(\Michaels\Manager\Manager $config)
+    {
+        $this->config = $config;
     }
 
     /**
@@ -113,7 +123,7 @@ class Manager extends Collection implements ManagesItemsInterface
         $diverClassName = $properties['driver'];
         unset($properties['driver']);
 
-        return new Connection($diverClassName, $properties);
+        return new Connection($diverClassName, $properties, $this->config);
     }
 
     /**

@@ -1,14 +1,14 @@
 <?php
 namespace Spider\Test\Stubs;
 
+use Spider\Base\Collection;
+use Spider\Base\ThrowsNotSupportedTrait;
 use Spider\Commands\CommandInterface;
+use Spider\Connections\Manager;
 use Spider\Drivers\AbstractDriver;
 use Spider\Drivers\DriverInterface;
-use Spider\Base\Collection;
 use Spider\Drivers\Response;
 use Spider\Exceptions\FormattingException;
-use Spider\Exceptions\InvalidCommandException;
-use Spider\Exceptions\NotSupportedException;
 
 
 /**
@@ -37,10 +37,23 @@ use Spider\Exceptions\NotSupportedException;
  */
 class DriverStub extends AbstractDriver implements DriverInterface
 {
+    use ThrowsNotSupportedTrait;
+
     /**
      * @var string some unique identifier in the event of wanting to test multiple drivers
      */
     public $identifier = "one";
+
+    /**
+     * Create a new instance with a client
+     * @param array $properties Configuration properties
+     * @param Manager $config
+     */
+    public function __construct(array $properties = [], Manager $config = null)
+    {
+        // Populate configuration
+        parent::__construct($properties, $config);
+    }
 
     public function open()
     {
@@ -91,7 +104,7 @@ class DriverStub extends AbstractDriver implements DriverInterface
      */
     public function runReadCommand($query)
     {
-        $this->executeReadCommand($command);
+        $this->executeReadCommand($query);
         return $this;
     }
 
@@ -106,7 +119,8 @@ class DriverStub extends AbstractDriver implements DriverInterface
         $this->executeWriteCommand($command);
         return $this;
     }
-        /**
+
+    /**
      * Opens a transaction
      *
      * @return bool
@@ -133,8 +147,8 @@ class DriverStub extends AbstractDriver implements DriverInterface
      * This is for cases where a set of Vertices or Edges is expected in the response
      *
      * @param mixed $response the raw DB response
-     *
      * @return Response Spider consistent response
+     * @throws FormattingException
      */
     public function formatAsSet($response)
     {
@@ -143,20 +157,17 @@ class DriverStub extends AbstractDriver implements DriverInterface
                 "The response from the database was incorrectly formatted for this operation"
             );
         }
-        if(empty($response))
-        {
+        if (empty($response)) {
             return $response;
         }
 
-        if(count($response) == 1)
-        {
+        if (count($response) == 1) {
             return $this->mapToCollection($response[0]);
         }
 
         //several items
         $result = [];
-        foreach($response as $row)
-        {
+        foreach ($response as $row) {
             $result[] = $this->mapToCollection($row);
         }
 
@@ -173,7 +184,7 @@ class DriverStub extends AbstractDriver implements DriverInterface
      */
     public function formatAsTree($response)
     {
-        throw new NotSupportedException(__FUNCTION__ . "is not currently supported for the Gremlin Driver");
+        $this->notSupported(__FUNCTION__ . "is not currently supported for the Gremlin Driver");
     }
 
     /**
@@ -181,8 +192,8 @@ class DriverStub extends AbstractDriver implements DriverInterface
      * This is for cases where a set of Vertices or Edges is expected in path format from the response
      *
      * @param mixed $response the raw DB response
-     *
      * @return Response Spider consistent response
+     * @throws FormattingException
      */
     public function formatAsPath($response)
     {
@@ -192,17 +203,14 @@ class DriverStub extends AbstractDriver implements DriverInterface
             );
         }
 
-        if(empty($response))
-        {
+        if (empty($response)) {
             return $response;
         }
 
         $result = [];
-        foreach($response as $path)
-        {
+        foreach ($response as $path) {
             $resultPath = [];
-            foreach($path as $row)
-            {
+            foreach ($path as $row) {
                 $resultPath[] = $this->mapToCollection($row);
             }
             $result[] = $resultPath;
@@ -268,8 +276,7 @@ class DriverStub extends AbstractDriver implements DriverInterface
     {
         $collection = new Collection();
 
-        if(isset($row['id']))
-        {
+        if (isset($row['id'])) {
             // We're in an Element scenario
             $collection->add($row['properties']);
             $collection->add([
@@ -281,9 +288,7 @@ class DriverStub extends AbstractDriver implements DriverInterface
             $collection->protect('meta');
             $collection->protect('id');
             $collection->protect('label');
-        }
-        else
-        {
+        } else {
             //custom scenarios:
             $collection->add($row);
         }

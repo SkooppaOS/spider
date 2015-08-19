@@ -93,7 +93,6 @@ class Spider extends Query
      *
      * @param array $config
      * @param null $connection alias of connection to set
-     * @param IocContainerInterface $di
      * @throws ConnectionNotFoundException
      */
     public function __construct(array $config = [], $connection = null)
@@ -130,8 +129,16 @@ class Spider extends Query
             }
         }
 
+        /* General Configuration */
+        $general = $config;
+        unset($general['connections']);
+        $this->config->reset($general);
+
         /* Connection Manager and Connection */
         if (isset($config['connections'])) {
+            // Pass the configuration down to the ConnectionManager
+            $this->connections->setConfig($this->config);
+
             // Set the connection manifest
             $this->connections->reset($config['connections']);
 
@@ -139,14 +146,9 @@ class Spider extends Query
             parent::__construct(
                 $this->connections->fetch($connection)
             );
-
-            unset($config['connections']);
         } else {
             throw new ConnectionNotFoundException("Spider cannot be instantiated without a connection");
         }
-
-        /* General Configuration */
-        $this->config->reset($config);
     }
 
     /**

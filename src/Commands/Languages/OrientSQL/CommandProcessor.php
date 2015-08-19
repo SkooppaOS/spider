@@ -1,6 +1,8 @@
 <?php
 namespace Spider\Commands\Languages\OrientSQL;
 
+use Michaels\Manager\Manager;
+use Spider\Base\ThrowsNotSupportedTrait;
 use Spider\Commands\Bag;
 use Spider\Commands\Command;
 use Spider\Commands\CommandInterface;
@@ -14,6 +16,7 @@ use Spider\Graphs\ID as TargetID;
  */
 class CommandProcessor implements ProcessorInterface
 {
+    use ThrowsNotSupportedTrait;
     /**
      * A map of commands from the Command Bag to Orient SQL
      * @var array
@@ -45,6 +48,14 @@ class CommandProcessor implements ProcessorInterface
 
     /** @var  string The script in process */
     protected $script;
+
+    /** @var  Manager General configuration */
+    protected $config;
+
+    public function __construct(Manager $config = null)
+    {
+        $this->config = $config;
+    }
 
     /**
      * Command Processor
@@ -283,7 +294,7 @@ class CommandProcessor implements ProcessorInterface
         if (is_array($this->bag->groupBy)) {
             // Perform compliance Check
             if (count($this->bag->groupBy) > 1) {
-                throw new NotSupportedException("Orient DB only allows one field in Group By");
+                $this->notSupported("Orient DB only allows one field in Group By");
             }
 
             $this->addToScript("GROUP BY");
@@ -301,7 +312,7 @@ class CommandProcessor implements ProcessorInterface
         if (is_array($this->bag->orderBy)) {
             // Perform compliance check
             if (count($this->bag->orderBy) > 1) {
-                throw new NotSupportedException("Orient DB only allows one field in Order By");
+                $this->notSupported("Orient DB only allows one field in Order By");
             }
 
             $this->addToScript("ORDER BY");

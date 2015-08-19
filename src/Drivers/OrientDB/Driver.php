@@ -1,13 +1,15 @@
 <?php
 namespace Spider\Drivers\OrientDB;
 
-use PhpOrient\PhpOrient;
-use PhpOrient\Protocols\Binary\Data\Record as OrientRecord;
-use PhpOrient\Protocols\Binary\Data\Record;
+use Michaels\Manager\Manager;
 use PhpOrient\Exceptions\PhpOrientException as ServerException;
+use PhpOrient\PhpOrient;
+use PhpOrient\Protocols\Binary\Data\Record;
+use PhpOrient\Protocols\Binary\Data\Record as OrientRecord;
 use Spider\Base\Collection;
-use Spider\Commands\CommandInterface;
+use Spider\Base\ThrowsNotSupportedTrait;
 use Spider\Commands\BaseBuilder;
+use Spider\Commands\CommandInterface;
 use Spider\Commands\Languages\OrientSQL\CommandProcessor;
 use Spider\Drivers\AbstractDriver;
 use Spider\Drivers\DriverInterface;
@@ -23,6 +25,8 @@ use Spider\Graphs\Graph;
  */
 class Driver extends AbstractDriver implements DriverInterface
 {
+    use ThrowsNotSupportedTrait;
+
     /* Driver Credentials */
     /** @var  string OrientDB server hostname */
     protected $hostname;
@@ -65,11 +69,12 @@ class Driver extends AbstractDriver implements DriverInterface
     /**
      * Create a new instance with a client
      * @param array $properties Configuration properties
+     * @param Manager $config
      */
-    public function __construct(array $properties = [])
+    public function __construct(array $properties = [], Manager $config = null)
     {
         // Populate configuration
-        parent::__construct($properties);
+        parent::__construct($properties, $config);
 
         // Initialize the language binding client
         $this->client = new PhpOrient();
@@ -264,7 +269,7 @@ class Driver extends AbstractDriver implements DriverInterface
             $processor = new $this->languages['orientSQL'];
             $command = $command->getCommand($processor);
         } elseif (!$this->isSupportedLanguage($command->getScriptLanguage())) {
-            throw new NotSupportedException(__CLASS__ . " does not support ". $command->getScriptLanguage());
+            $this->notSupported(__CLASS__ . " does not support " . $command->getScriptLanguage());
         }
 
         try {
@@ -295,7 +300,7 @@ class Driver extends AbstractDriver implements DriverInterface
             $processor = new $this->languages['orientSQL'];
             $query = $query->getCommand($processor);
         } elseif (!$this->isSupportedLanguage($query->getScriptLanguage())) {
-            throw new NotSupportedException(__CLASS__ . " does not support ". $query->getScriptLanguage());
+            $this->notSupported(__CLASS__ . " does not support " . $query->getScriptLanguage());
         }
 
         $this->client->query($query->getScript());
@@ -314,7 +319,7 @@ class Driver extends AbstractDriver implements DriverInterface
             $processor = new $this->languages['orientSQL'];
             $command = $command->getCommand($processor);
         } elseif (!$this->isSupportedLanguage($command->getScriptLanguage())) {
-            throw new NotSupportedException(__CLASS__ . " does not support ". $command->getScriptLanguage());
+            $this->notSupported(__CLASS__ . " does not support " . $command->getScriptLanguage());
         }
 
         $this->client->command($command->getScript());
@@ -419,8 +424,7 @@ class Driver extends AbstractDriver implements DriverInterface
      */
     public function formatAsTree($response)
     {
-        // TODO: Implement formatAsTree() method.
-        throw new NotSupportedException(__FUNCTION__ . " is not currently supported for OrientDB driver");
+        $this->notSupported(__FUNCTION__ . " is not currently supported for OrientDB driver");
     }
 
     /**
@@ -433,8 +437,7 @@ class Driver extends AbstractDriver implements DriverInterface
      */
     public function formatAsPath($response)
     {
-        // TODO: Implement formatAsPath() method.
-        throw new NotSupportedException(__FUNCTION__ . " is not currently supported for OrientDB driver");
+        $this->notSupported(__FUNCTION__ . " is not currently supported for OrientDB driver");
     }
 
     /**

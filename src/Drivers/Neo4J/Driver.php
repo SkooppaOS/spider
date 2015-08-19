@@ -4,7 +4,9 @@ namespace Spider\Drivers\Neo4J;
 
 use Everyman\Neo4j\Client;
 use Everyman\Neo4j\Cypher\Query;
+use Michaels\Manager\Manager;
 use Spider\Base\Collection;
+use Spider\Base\ThrowsNotSupportedTrait;
 use Spider\Commands\CommandInterface;
 use Spider\Drivers\AbstractDriver;
 use Spider\Drivers\DriverInterface;
@@ -16,6 +18,8 @@ use Spider\Exceptions\NotSupportedException;
 
 class Driver extends AbstractDriver implements DriverInterface
 {
+    use ThrowsNotSupportedTrait;
+
     /**
      * @var string server hostname. Defaults to "localhost"
      */
@@ -47,6 +51,17 @@ class Driver extends AbstractDriver implements DriverInterface
     protected $languages = [
         'cypher' => '\Spider\Commands\Cypher\Processor',
     ];
+
+    /**
+     * Create a new instance
+     *
+     * @param array $properties an array of the properties to set for this class
+     * @param Manager $config Configuration
+     */
+    public function __construct(array $properties = [], Manager $config = null)
+    {
+        parent::__construct($properties, $config);
+    }
 
     /**
      * Open a database connection
@@ -83,9 +98,9 @@ class Driver extends AbstractDriver implements DriverInterface
     public function executeReadCommand($query)
     {
         if ($query instanceof BaseBuilder) {
-            throw new NotSupportedException("There are currently no processors for cypher.");
+            $this->notSupported("There are currently no processors for cypher.");
         } elseif (!$this->isSupportedLanguage($query->getScriptLanguage())) {
-            throw new NotSupportedException(__CLASS__ . " does not support ". $query->getScriptLanguage());
+            $this->notSupported(__CLASS__ . " does not support ". $query->getScriptLanguage());
         }
 
         $neoQuery = new Query($this->client, $query->getScript());
@@ -202,7 +217,7 @@ class Driver extends AbstractDriver implements DriverInterface
      */
     public function formatAsTree($response)
     {
-        throw new NotSupportedException(__FUNCTION__ . "is not currently supported for the Gremlin Driver");
+        $this->notSupported(__FUNCTION__ . "is not currently supported for the Gremlin Driver");
     }
 
     /**
@@ -319,7 +334,7 @@ class Driver extends AbstractDriver implements DriverInterface
      */
     public function makeProcessor()
     {
-        throw new NotSupportedException("Cypher Language does not have a processor yet");
+        $this->notSupported("Cypher Language does not have a processor yet");
         // TODO: Implement makeProcessor() method.
     }
 }

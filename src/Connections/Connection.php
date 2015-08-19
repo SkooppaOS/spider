@@ -1,6 +1,7 @@
 <?php
 namespace Spider\Connections;
 
+use Michaels\Manager\Manager as ConfigManager;
 use Spider\Base\Collection;
 use Spider\Commands\CommandInterface;
 use Spider\Drivers\DriverInterface;
@@ -16,6 +17,9 @@ class Connection extends Collection implements ConnectionInterface
     /** @var  DriverInterface Instance of the driver */
     protected $driver;
 
+    /** @var ConfigManager Configuration  */
+    protected $config;
+
     protected $driverAliases = [
         'orientdb' => 'Spider\Drivers\OrientDB\Driver',
         'gremlin' => 'Spider\Drivers\Gremlin\Driver',
@@ -27,10 +31,12 @@ class Connection extends Collection implements ConnectionInterface
      *
      * @param DriverInterface|string $driver
      * @param array $configuration Credentials and configuration
+     * @param ConfigManager|Manager $configManager
      */
-    public function __construct($driver, array $configuration = [])
+    public function __construct($driver, array $configuration = [], ConfigManager $configManager = null)
     {
-        /* I am sure all this could be refactored */
+        // Set general configuration
+        $this->config = $configManager;
 
         // Were we passed all the properties through the first argument?
         $config = (is_array($driver) ? $driver : $configuration);
@@ -246,11 +252,11 @@ class Connection extends Collection implements ConnectionInterface
         // As an alias
         if (isset($this->driverAliases[$driver])) {
             $driverClass = $this->driverAliases[$driver];
-            $this->driver = new $driverClass();
+            $this->driver = new $driverClass([], $this->config);
 
         // As a classname
         } else {
-            $this->driver = new $driver();
+            $this->driver = new $driver([], $this->config);
         }
     }
 }
