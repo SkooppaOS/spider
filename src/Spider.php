@@ -42,13 +42,13 @@ class Spider extends Query
     /** @var array Defaults for global setup configuration, minus connections */
     protected static $defaults = [
         'integrations' => [
-            'events' => 'Spider\Integrations\Events\Emitter',
-            'logger' => 'Spider\Integrations\Logs\Logger',
+//            'events' => 'Spider\Integrations\Events\Emitter',
+//            'logger' => 'Spider\Integrations\Logs\Logger',
         ],
         'errors' => [
             'not_supported' => 'silent'
         ],
-        'logging' => false, // do not log
+//        'logging' => false, // do not log
 //        'logging' => [
 //            'handler' => $handler,
 //            'other-options' => 'passed through'
@@ -176,7 +176,7 @@ class Spider extends Query
 
         /* Event Dispatcher */
         // Now, when you fetch() events, it will return the one dispatcher
-        $this->di->share('events');
+//        $this->di->share('events');
 
         /* General Configuration */
         $this->config->reset($config);
@@ -256,8 +256,8 @@ class Spider extends Query
      * Returns the Event Dispatcher
      * @return object
      */
-    public function getEventDispatcher()
-    {
-        return $this->di->fetch('events');
-    }
+//    public function getEventDispatcher()
+//    {
+//        return $this->di->fetch('events');
+//    }
 }

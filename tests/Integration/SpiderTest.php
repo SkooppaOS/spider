@@ -38,8 +38,8 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
         ];
 
         $this->integrations = [
-            'events' => 'EventDispatcher',
-            'logger' => 'logging',
+//            'events' => 'EventDispatcher',
+//            'logger' => 'logging',
         ];
 
         $this->options = [
