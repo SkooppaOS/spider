@@ -23,12 +23,6 @@ class Spider extends Query
      *          ]
      *      ],
      *
-     *      // Extensible and replaceable integrations
-     *      integrations => [
-     *          'logger' => factory
-     *          'events' => factory
-     *      ]
-     *
      *      // General configuration
      *      'errors' => [
      *          'not_supported' => 'fatal|quiet|silent'
@@ -41,25 +35,13 @@ class Spider extends Query
 
     /** @var array Defaults for global setup configuration, minus connections */
     protected static $defaults = [
-        'integrations' => [
-//            'events' => 'Spider\Integrations\Events\Emitter',
-//            'logger' => 'Spider\Integrations\Logs\Logger',
-        ],
         'errors' => [
             'not_supported' => 'silent'
         ],
-//        'logging' => false, // do not log
-//        'logging' => [
-//            'handler' => $handler,
-//            'other-options' => 'passed through'
-//        ]
     ];
 
     /** @var  BaseManager Configuration for a specific instance */
     protected $config;
-
-    /** @var  IoCManager Dependency Injection Manager */
-    protected $di;
 
     /* Static Factory and Global Configuration */
     /**
@@ -70,9 +52,6 @@ class Spider extends Query
     public static function setup(array $setup = [], IocContainerInterface $di = null)
     {
         static::$setup = $setup;
-
-        if ($di)
-            static::$setup['diContainer'] = $di;
     }
 
     /**
@@ -86,18 +65,16 @@ class Spider extends Query
 
     /**
      * Builds a new spider based on default or provided connection alias
-     * @param null $connection
+     * @param null $connectionAlias
      * @return static
      */
-    public static function make($connection = null)
+    public static function make($connectionAlias = null)
     {
-        if (!is_string($connection) && !is_null($connection)) {
+        if (!is_string($connectionAlias) && !is_null($connectionAlias)) {
             throw new \InvalidArgumentException("Spider::make() only accepts an alias for an already set connection");
         }
-        return new static(
-            static::$setup, // Configuration
-            $connection, // Connection to setup
-            (isset(static::$setup['diContainer'])) ? static::$setup['diContainer'] : null); // Optional di container
+
+        return new static(static::$setup, $connectionAlias);
     }
 
     /**
@@ -119,11 +96,10 @@ class Spider extends Query
      * @param IocContainerInterface $di
      * @throws ConnectionNotFoundException
      */
-    public function __construct(array $config = [], $connection = null, IocContainerInterface $di = null)
+    public function __construct(array $config = [], $connection = null)
     {
         // Setup dependencies
         $this->connections = new ConnectionManager();
-        $this->di = ($di) ? $di : new IocManager();
         $this->config = new BaseManager();
 
         // Configure Instance
@@ -151,7 +127,6 @@ class Spider extends Query
                 } elseif (is_array($value)) {
                     $config[$key] = array_merge($this->getDefaults()[$key], $config[$key]);
                 }
-                // If value is set and not an array, leave it alone
             }
         }
 
@@ -169,14 +144,6 @@ class Spider extends Query
         } else {
             throw new ConnectionNotFoundException("Spider cannot be instantiated without a connection");
         }
-
-        /* Components for the IoC Manager */
-        $this->di->initDI($config['integrations']);
-        unset($config['integrations']);
-
-        /* Event Dispatcher */
-        // Now, when you fetch() events, it will return the one dispatcher
-//        $this->di->share('events');
 
         /* General Configuration */
         $this->config->reset($config);
@@ -235,29 +202,9 @@ class Spider extends Query
     public function getConfig()
     {
         $config = $this->config->all();
-        $config['integrations'] = $this->di->getIocManifest();
-
         $config['connections'] = $this->connections->all();
         unset($config['connections']['cache']);
 
         return $config;
     }
-
-    /**
-     * Returns the IoC Manager
-     * @return IocContainerInterface|IocManager
-     */
-    public function getDI()
-    {
-        return $this->di;
-    }
-
-    /**
-     * Returns the Event Dispatcher
-     * @return object
-     */
-//    public function getEventDispatcher()
-//    {
-//        return $this->di->fetch('events');
-//    }
 }

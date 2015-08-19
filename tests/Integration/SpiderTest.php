@@ -13,7 +13,6 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
 
     protected $fullConfig;
     protected $connections;
-    protected $integrations;
     protected $options;
 
     public function setup()
@@ -37,21 +36,13 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             ]
         ];
 
-        $this->integrations = [
-//            'events' => 'EventDispatcher',
-//            'logger' => 'logging',
-        ];
-
         $this->options = [
             'errors' => [
                 'not_supported' => 'warning',
             ],
-            'logging' => false,
         ];
 
         $this->fullConfig['connections'] = $this->connections;
-        $this->fullConfig['integrations'] = $this->integrations;
-
         $this->fullConfig = array_merge($this->options, $this->fullConfig);
     }
 
@@ -88,7 +79,6 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
 
         $this->specify("it merges with default configuration", function () {
             $config = [
-                'logging' => 3,
                 'errors' => [
                     'not_supported' => 'fail'
                 ]
@@ -99,7 +89,6 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             $actual = $spider->getConfig();
 
             $expected = Spider::getDefaults();
-            $expected['logging'] = 3;
             $expected['connections'] = $config['connections'];
             $expected['errors']['not_supported'] = 'fail';
 
@@ -131,7 +120,7 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             $this->assertEquals($this->fullConfig, $spider->getConfig(), "failed to setup configuration");
         });
 
-        $this->specify("it instantiates a new instance", function () {
+        $this->specify("it instantiates a new instance with configuration", function () {
             $spider = new Spider($this->fullConfig);
             $actual = $spider->getConfig();
 
@@ -237,79 +226,5 @@ class SpiderTest extends \PHPUnit_Framework_TestCase
             ]);
             Spider::make();
         }, ['throws' => 'Spider\Exceptions\ConnectionNotFoundException']);
-    }
-
-    public function testSwapIocContainer()
-    {
-        Spider::setup($this->fullConfig, new IocContainerStub());
-
-        $spider = Spider::make();
-
-        $this->assertInstanceOf('Spider\Test\Stubs\IocContainerStub', $spider->getDI(), "failed to swap ioc container");
-    }
-
-    /* This is also tested in the michaels/data-manager package */
-    /* The standard IoC container has a lot more functionality. See michaels/data-manager */
-    /* Tested here to ensure compatibility */
-    public function testIocContainer()
-    {
-        $this->specify("it uses a string-based factory", function () {
-            $config['connections'] = $this->connections;
-            $config['integrations'] = [
-                'test' => '\stdClass'
-            ];
-            Spider::setup($config);
-            $spider = Spider::make();
-
-            $actual = $spider->getDI()->fetch('test');
-
-            $this->assertInstanceOf('\stdClass', $actual, "failed to produce from a string");
-        });
-
-        $this->specify("it uses a closure-based factory", function () {
-            $config['connections'] = $this->connections;
-            $config['integrations'] = [
-                'test' => function () {
-                    return new \stdClass();
-                }
-            ];
-            Spider::setup($config);
-            $spider = Spider::make();
-
-            $actual = $spider->getDI()->fetch('test');
-
-            $this->assertInstanceOf('\stdClass', $actual, "failed to produce from a string");
-        });
-
-        $this->specify("it uses an object-based factory", function () {
-            $config['connections'] = $this->connections;
-            $config['integrations'] = [
-                'test' => new \stdClass(),
-            ];
-            Spider::setup($config);
-            $spider = Spider::make();
-
-            $actual = $spider->getDI()->fetch('test');
-
-            $this->assertInstanceOf('\stdClass', $actual, "failed to produce from a string");
-        });
-
-        $this->specify("it uses an instance of the ioc container as a factory", function () {
-            $di = new IocManager([
-                'test' => new \stdClass(),
-            ]);
-
-            $config['connections'] = $this->connections;
-            $config['integrations'] = [
-                'test' => $di
-            ];
-
-            Spider::setup($config);
-            $spider = Spider::make();
-
-            $actual = $spider->getDI()->fetch('test');
-
-            $this->assertInstanceOf('\stdClass', $actual, "failed to produce from a string");
-        });
     }
 }
