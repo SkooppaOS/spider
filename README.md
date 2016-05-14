@@ -1,4 +1,7 @@
 # Spider Graphs
+
+[![Managed with ZenHub!](https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png)](https://zenhub.io)
+[![Join the chat at https://gitter.im/spider/spider](https://badges.gitter.im/spider/spider.svg)](https://gitter.im/spider/spider?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Latest Version](https://img.shields.io/github/release/spider/spider.svg?style=flat-square)](https://github.com/spider/spider/releases)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 [![Build Status](https://travis-ci.org/spider/spider.svg?branch=master)](https://travis-ci.org/spider/spider)
@@ -80,7 +83,7 @@ foreach ($characters as $character) {
 ```
 
 Of course, there's a lot more you can do.
-Check out **[the full documentation](http://http://spider-ogm.readthedocs.org/)**.
+Check out **[the full documentation](http://spider-ogm.readthedocs.org/)**.
 
 ## Inspired By
   * [Eloquent ORM](http://laravel.com/docs/5.0/eloquent)
